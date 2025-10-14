@@ -68,7 +68,7 @@ export default function ReplyForm({ tweetId, onReplyCreated, onCancel }: ReplyFo
   };
 
   return (
-    <div className="d-flex align-items-start gap-2">
+    <div className="d-flex align-items-start gap-2 mt-1">
       <div className="reply card mb-2 flex-grow-1">
         <div className="card-body py-2">
           <form onSubmit={handleSubmit}>

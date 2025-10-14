@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Tweet, Reply } from '@/types';
 import ReplyForm from '@/components/ReplyForm';
 import ReplyCard from '@/components/ReplyCard';
+import { useReplies } from '@/hooks/useApi';
 
 interface TweetCardProps {
   tweet: Tweet;
@@ -17,35 +18,17 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
 
-  // Mock replies for now
-  const mockReplies: Reply[] = [
-    {
-      id: 1,
-      content: 'Great tweet! 👍',
-      user_id: 2,
-      parent_id: tweet.id,
-      created_at: new Date(Date.now() - 1800000).toISOString(),
-      updated_at: new Date(Date.now() - 1800000).toISOString(),
-      user: {
-        id: 2,
-        username: 'reply_user',
-        display_name: 'Reply User',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    },
-  ];
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -75,10 +58,10 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
   const handleLoadMoreReplies = async () => {
     setIsLoadingReplies(true);
     try {
-      // TODO: Implement actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setReplies(mockReplies);
+      const replies = await useReplies(tweet.id);
+      setReplies(replies.replies);
       setShowAllReplies(true);
+      console.log('Replies:', replies);
     } catch (error) {
       console.error('Error loading replies:', error);
     } finally {
@@ -94,36 +77,36 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
   return (
     <article
       id={`tweet-${tweet.id}`}
-      style={{ border: '1px solid #eee', padding: '8px', margin: '5px' }}
+      style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
     >
       <div className="d-flex flex-row justify-content-between align-items-center mb-2">
         <p className="p-0 m-0">
           <i className="fa-solid fa-user"></i>
           <strong> {tweet.user?.display_name || 'Unknown User'}</strong>
         </p>
-        
+
         <div className="d-flex align-items-center gap-2">
           <small>
             <i className="fa-solid fa-clock"></i>
             {formatDate(tweet.created_at)}
           </small>
-          
+
           {canEdit && (
             <div className="dropdown" style={{ justifySelf: 'right', cursor: 'pointer' }}>
-              <i 
-                className="fa-solid fa-gear" 
-                data-bs-toggle="dropdown" 
+              <i
+                className="fa-solid fa-gear"
+                data-bs-toggle="dropdown"
                 style={{ cursor: 'pointer' }}
               ></i>
               <div className="dropdown-menu dropdown-menu-end">
-                <button 
-                  className="dropdown-item" 
+                <button
+                  className="dropdown-item"
                   onClick={handleEdit}
                 >
                   <i className="fa-solid fa-pencil"></i> Edit
                 </button>
-                <button 
-                  className="dropdown-item" 
+                <button
+                  className="dropdown-item"
                   onClick={handleDelete}
                 >
                   <i className="fa-solid fa-trash"></i> Delete
@@ -136,17 +119,17 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
 
       <div>
         <p style={{ whiteSpace: 'pre-wrap' }}>{tweet.content}</p>
-        
-        <div 
+
+        {displayedReplies.length > 0 && (<div
           id={`replies-${tweet.id}`}
-          style={{ borderTop: '1px solid #eee', paddingTop: '5px' }}
+          style={{ borderTop: '1px solid rgb(201 201 201)', }}
         >
           {displayedReplies.map(reply => (
             <ReplyCard
               key={reply.id}
               reply={reply}
               onReplyUpdated={(updatedReply: Reply) => {
-                setReplies(prev => 
+                setReplies(prev =>
                   prev.map(r => r.id === updatedReply.id ? updatedReply : r)
                 );
               }}
@@ -155,7 +138,7 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
               }}
             />
           ))}
-          
+
           {hasMoreReplies && (
             <div className="text-center mt-2" id={`load_more_replies_${tweet.id}`}>
               <button
@@ -175,8 +158,9 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
             </div>
           )}
         </div>
+        )}
 
-        <div className="mt-2 mb-2" style={{ borderTop: '1px solid #eee', paddingTop: '5px' }}>
+        <div className="mt-2 mb-2" style={{ borderTop: '1px solid rgb(201 201 201)' }}>
           {showReplyForm ? (
             <ReplyForm
               tweetId={tweet.id}
@@ -185,7 +169,7 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
             />
           ) : (
             <button
-              className="btn btn-sm btn-outline-primary"
+              className="btn btn-sm btn-outline-primary mt-1"
               onClick={() => setShowReplyForm(true)}
             >
               <i className="fa-solid fa-reply me-1"></i>

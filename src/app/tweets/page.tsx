@@ -77,9 +77,9 @@ export default function TweetsPage() {
 
   return (
     <div className="container-fluid w-50">
-      <h1>Tweets</h1>
+      <h1 className='text-center'>Tweets</h1>
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div style={{ marginBottom: '1rem' , display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' , gap: '1rem' }}>
         {showForm && (
           <TweetForm 
             onTweetCreated={handleTweetCreated}
@@ -89,7 +89,7 @@ export default function TweetsPage() {
         
         {!showForm && (
           <button 
-            className="btn btn-primary mb-3"
+            className="btn btn-primary"
             onClick={() => setShowForm(true)}
           >
             <i className="fa-solid fa-plus me-2"></i>
@@ -98,13 +98,13 @@ export default function TweetsPage() {
         )}
 
         {/* Sorting controls */}
-        <div className="mb-3 mt-3">
+        <div className="mb-1 mt-1">
           <select 
             className="form-select w-auto" 
             value={`${filters.sort}_${filters.direction}`}
             onChange={handleSortChange}
           >
-            <option value="date_desc">Newest</option>
+            <option value="date_desc" selected>Newest</option>
             <option value="date_asc">Oldest</option>
             <option value="most_replies_">Most replies</option>
             <option value="display_name_asc">Display name A→Z</option>
