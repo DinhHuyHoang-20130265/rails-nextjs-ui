@@ -1,19 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Reply } from '@/types';
+import { useCreateReply, useUpdateReply, useDeleteReply } from '@/hooks/useApi';
 
 interface ReplyFormProps {
   tweetId: number;
-  onReplyCreated: (reply: Reply) => void;
   onCancel: () => void;
 }
 
-export default function ReplyForm({ tweetId, onReplyCreated, onCancel }: ReplyFormProps) {
+export default function ReplyForm({ tweetId, onCancel }: ReplyFormProps) {
   const [content, setContent] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { createReply } = useCreateReply(tweetId);
+  const { updateReply } = useUpdateReply(tweetId);
+  const { deleteReply } = useDeleteReply(tweetId);
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { value } = e.target;
     setContent(value);
@@ -29,35 +30,12 @@ export default function ReplyForm({ tweetId, onReplyCreated, onCancel }: ReplyFo
     setErrors([]);
 
     try {
-      // TODO: Implement actual API call
-      console.log('Reply data:', { content, parent_id: tweetId });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock created reply
-      const newReply: Reply = {
-        id: Date.now(), // Mock ID
-        content: content,
-        user_id: 1, // Mock user ID
-        parent_id: tweetId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user: {
-          id: 1,
-          username: 'demo_user',
-          display_name: 'Demo User',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      };
-      
-      onReplyCreated(newReply);
-      
-      // Reset form
+      await createReply({ content });
       setContent('');
+      setErrors([]);
+      onCancel();
     } catch (error) {
-      setErrors(['An error occurred while posting the reply. Please try again.']);
+      setErrors(['An error occurred while posting the reply. Please try again.', (error as Error).message]);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { StageProps } from '@/types/forgot-password';
 import { validateOtp } from '../helpers/validation';
-import { resendOtp } from '../helpers/api';
+import { authApi } from '@/api';
 import { startCountdown } from '../helpers/utils';
 
 export default function OtpStage({ state, actions }: StageProps) {
@@ -35,7 +36,7 @@ export default function OtpStage({ state, actions }: StageProps) {
     actions.setErrors([]);
 
     try {
-      await resendOtp(state.formData.email);
+      await authApi.resendOtp(state.formData.email);
       actions.setCountdown(60); // Reset countdown
       
       // Start countdown
@@ -119,9 +120,9 @@ export default function OtpStage({ state, actions }: StageProps) {
           </p>
           
           <p className="small mt-2">
-            <a href="/auth/forgot-password" className="text-decoration-none">
+            <Link href="/auth/forgot-password" className="text-decoration-none">
               ← Back to email entry
-            </a>
+            </Link>
           </p>
         </div>
       </section>

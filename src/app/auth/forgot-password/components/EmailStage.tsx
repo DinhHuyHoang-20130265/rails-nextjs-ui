@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { StageProps } from '@/types/forgot-password';
 import { validateEmail } from '../helpers/validation';
-import { sendResetEmail } from '../helpers/api';
+import { authApi } from '@/api';
 import { startCountdown } from '../helpers/utils';
 
 export default function EmailStage({ state, actions }: StageProps) {
@@ -20,7 +21,7 @@ export default function EmailStage({ state, actions }: StageProps) {
         return;
       }
 
-      await sendResetEmail(state.formData.email);
+      await authApi.sendForgotPasswordEmail(state.formData.email);
       
       // Move to OTP stage
       actions.setStage('otp');
@@ -87,9 +88,9 @@ export default function EmailStage({ state, actions }: StageProps) {
         <div className="mt-3 text-center">
           <p className="small">
             Remember your password?{' '}
-            <a href="/auth/sign-in" className="text-decoration-none">
+            <Link href="/auth/sign-in" className="text-decoration-none">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </section>

@@ -65,12 +65,13 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  tweets: T[];
+  data: T[];
   meta: {
     page: number;
     per_page: number;
     total: number;
     has_more: boolean;
+    remaining?: number;
   };
 }
 

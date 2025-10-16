@@ -1,24 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Tweet, Reply } from '@/types';
+import { Tweet } from '@/types';
 import ReplyForm from '@/components/ReplyForm';
-import ReplyCard from '@/components/ReplyCard';
-import { useReplies } from '@/hooks/useApi';
+import { useCurrentUser, useDeleteTweet } from '@/hooks/useApi';
+import { showToast } from '@/helpers/showToast';
+import ReplyList from './ReplyList';
 
 interface TweetCardProps {
   tweet: Tweet;
   onTweetUpdated: (tweet: Tweet) => void;
-  onTweetDeleted: (tweetId: number) => void;
+  onTweetDeleted: () => void;
 }
 
-export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
+export default function TweetCard({ tweet, onTweetUpdated, onTweetDeleted }: TweetCardProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [replies, setReplies] = useState<Reply[]>([]);
-  const [showAllReplies, setShowAllReplies] = useState(false);
-  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
-
-
+  const { deleteTweet } = useDeleteTweet();
+  const [showEditForm, setShowEditForm] = useState(false);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -32,17 +30,11 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
     return date.toLocaleDateString();
   };
 
-  const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit tweet:', tweet.id);
-  };
-
   const handleDelete = async () => {
     if (window.confirm('Delete this tweet?')) {
       try {
-        // TODO: Implement actual API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        onTweetDeleted(tweet.id);
+        await deleteTweet(tweet.id);
+        onTweetDeleted();
       } catch (error) {
         console.error('Error deleting tweet:', error);
         alert('Failed to delete tweet. Please try again.');
@@ -50,31 +42,17 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
     }
   };
 
-  const handleReplyCreated = (newReply: Reply) => {
-    setReplies(prev => [newReply, ...prev]);
-    setShowReplyForm(false);
-  };
-
-  const handleLoadMoreReplies = async () => {
-    setIsLoadingReplies(true);
-    try {
-      const replies = await useReplies(tweet.id);
-      setReplies(replies.replies);
-      setShowAllReplies(true);
-      console.log('Replies:', replies);
-    } catch (error) {
-      console.error('Error loading replies:', error);
-    } finally {
-      setIsLoadingReplies(false);
-    }
-  };
-
-  const currentUserId = 1; // Mock current user ID
-  const canEdit = tweet.user_id === currentUserId;
-  const displayedReplies = showAllReplies ? replies : replies.slice(0, 5);
-  const hasMoreReplies = replies.length > 5 && !showAllReplies;
-
+  const { user: currentUser } = useCurrentUser();
+  const canEdit = tweet.user?.id === currentUser?.id;
+  
   return (
+    showEditForm ? (
+      <TweetFormEdit
+        tweet={tweet} 
+        onTweetUpdated={onTweetUpdated} 
+        style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
+        onCancel={() => setShowEditForm(false)} />
+    ) : (
     <article
       id={`tweet-${tweet.id}`}
       style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
@@ -101,7 +79,7 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
               <div className="dropdown-menu dropdown-menu-end">
                 <button
                   className="dropdown-item"
-                  onClick={handleEdit}
+                  onClick={() => setShowEditForm(true)}
                 >
                   <i className="fa-solid fa-pencil"></i> Edit
                 </button>
@@ -120,56 +98,17 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
       <div>
         <p style={{ whiteSpace: 'pre-wrap' }}>{tweet.content}</p>
 
-        {displayedReplies.length > 0 && (<div
-          id={`replies-${tweet.id}`}
-          style={{ borderTop: '1px solid rgb(201 201 201)', }}
-        >
-          {displayedReplies.map(reply => (
-            <ReplyCard
-              key={reply.id}
-              reply={reply}
-              onReplyUpdated={(updatedReply: Reply) => {
-                setReplies(prev =>
-                  prev.map(r => r.id === updatedReply.id ? updatedReply : r)
-                );
-              }}
-              onReplyDeleted={(replyId: number) => {
-                setReplies(prev => prev.filter(r => r.id !== replyId));
-              }}
-            />
-          ))}
-
-          {hasMoreReplies && (
-            <div className="text-center mt-2" id={`load_more_replies_${tweet.id}`}>
-              <button
-                className="btn btn-sm btn-outline-primary"
-                onClick={handleLoadMoreReplies}
-                disabled={isLoadingReplies}
-              >
-                {isLoadingReplies ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Loading...
-                  </>
-                ) : (
-                  `Load More Replies (${replies.length - 5} more)`
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-        )}
+        <ReplyList tweetId={tweet.id} />
 
         <div className="mt-2 mb-2" style={{ borderTop: '1px solid rgb(201 201 201)' }}>
           {showReplyForm ? (
             <ReplyForm
               tweetId={tweet.id}
-              onReplyCreated={handleReplyCreated}
               onCancel={() => setShowReplyForm(false)}
             />
           ) : (
             <button
-              className="btn btn-sm btn-outline-primary mt-1"
+              className="btn btn-sm btn-outline-primary mt-2"
               onClick={() => setShowReplyForm(true)}
             >
               <i className="fa-solid fa-reply me-1"></i>
@@ -177,7 +116,32 @@ export default function TweetCard({ tweet, onTweetDeleted }: TweetCardProps) {
             </button>
           )}
         </div>
-      </div>
-    </article>
+        </div>
+      </article>
+    )
   );
+}
+
+
+export const TweetFormEdit = ({ tweet, onTweetUpdated, onCancel, style }: { tweet: Tweet, onTweetUpdated: (tweet: Tweet) => void, onCancel: () => void, style: React.CSSProperties }) => {
+  const [content, setContent] = useState(tweet.content);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onTweetUpdated({ ...tweet, content });
+    onCancel();
+    showToast('Tweet updated successfully', 'success');
+  };
+  return (
+    <div style={style}>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="content" className="form-label">Content</label>
+          <textarea className="form-control" id="content" value={content} onChange={e => setContent(e.target.value)} />
+        </div>
+        <button type="submit" className="btn btn-primary">Save</button>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+      </form>
+    </div>
+  )
 }

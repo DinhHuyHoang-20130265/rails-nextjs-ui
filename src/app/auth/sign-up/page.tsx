@@ -1,10 +1,17 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { SignUpForm } from '@/types';
 import { authApi } from '@/api';
+import { showToast } from '@/helpers/showToast';
+
+// Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit
+const passwordRegex = /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}\z/;
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState<SignUpForm>({
     username: '',
     display_name: '',
@@ -32,15 +39,16 @@ export default function SignUpPage() {
     setErrors([]);
 
     try {
-      const response = await authApi.signUp(formData);
-      
-      // Store user data and token (in real app, you might use context or localStorage)
-      console.log('Sign up successful:', response.data);
-      
+      await authApi.signUp(formData);
+
+      showToast('Sign up successful, please sign in to continue', 'success');
       // Redirect to home
-      window.location.href = '/';
+      router.push('/auth/sign-in');
     } catch (error: any) {
-      setErrors([error.message || 'An error occurred during sign up. Please try again.']);
+      showToast('Sign up failed, please try again', 'error');
+      setErrors(error.errors ? error.errors.map((error: any) => "- " + error) :
+        ['An error occurred during sign up. Please try again.']);
+      console.log(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -48,8 +56,9 @@ export default function SignUpPage() {
 
   const isFormValid = () => {
     return (
-      formData.username.length >= 3 &&
-      formData.password.length >= 6 &&
+      formData.display_name &&
+      formData.username &&
+      passwordRegex.test(formData.password) &&
       formData.password === formData.password_confirmation
     );
   };
@@ -59,12 +68,12 @@ export default function SignUpPage() {
       <h2 className="lh-base" style={{ height: 'fit-content' }}>
         Sign up
       </h2>
-      
+
       <section className="w-50">
         <form onSubmit={handleSubmit}>
           {errors.length > 0 && (
             <div className="alert alert-danger">
-              <ul className="mb-0">
+              <ul className="mb-0 p-0">
                 {errors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}
@@ -98,7 +107,7 @@ export default function SignUpPage() {
               value={formData.username}
               onChange={handleInputChange}
               required
-              minLength={3}
+              minLength={1}
               className="form-control"
             />
           </div>
@@ -107,7 +116,9 @@ export default function SignUpPage() {
             <label htmlFor="password" className="form-label">
               Password *
             </label>
-            <p className="small text-muted">6 characters minimum</p>
+            <p className="small text-muted">
+              8 characters minimum, one lowercase letter, one uppercase letter, and one digit
+            </p>
             <input
               type="password"
               id="password"
@@ -150,9 +161,9 @@ export default function SignUpPage() {
         <div className="mt-3">
           <p className="small">
             Already have an account?{' '}
-            <a href="/auth/sign-in" className="text-decoration-none">
+            <Link href="/auth/sign-in" className="text-decoration-none">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </section>

@@ -21,66 +21,38 @@ export interface TweetQueryParams {
 // Tweets API Functions
 export const tweetsApi = {
   // Get all tweets with pagination and sorting
-  getTweets: async (params: TweetQueryParams = {}): Promise<ApiResponse<PaginatedResponse<Tweet>>> => {
+  getTweets: async (params: TweetQueryParams = {}): Promise<PaginatedResponse<Tweet>> => {
     const response = await apiClient.get<PaginatedResponse<Tweet>>(`/tweets`, { params });
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
 
   // Get single tweet by ID
-  getTweet: async (id: number): Promise<ApiResponse<Tweet>> => {
+  getTweet: async (id: number): Promise<Tweet> => {
     const response = await apiClient.get<Tweet>(`/tweets/${id}`);
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
 
   // Create new tweet
-  createTweet: async (tweetData: CreateTweetRequest): Promise<ApiResponse<Tweet>> => {
+  createTweet: async (tweetData: CreateTweetRequest): Promise<Tweet> => {
     const response = await apiClient.post<Tweet>(`/tweets`, tweetData);
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
 
   // Update existing tweet
-  updateTweet: async (tweetData: UpdateTweetRequest): Promise<ApiResponse<Tweet>> => {
-    // TODO: Replace with real API call
+  updateTweet: async (tweetData: UpdateTweetRequest): Promise<Tweet> => {
     const response = await apiClient.put<Tweet>(`/tweets/${tweetData.id}`, tweetData);
-
-    // Simulate API delay
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
-
-
 
   // Delete tweet
-  deleteTweet: async (id: number): Promise<ApiResponse<{ message: string }>> => {
-    // TODO: Replace with real API call
+  deleteTweet: async (id: number): Promise<{ message: string }> => {
     const response = await apiClient.delete<{ message: string }>(`/tweets/${id}`);
-
-    // Simulate API delay
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
 
-
-
   // Load more tweets (for infinite scroll)
-  loadMoreTweets: async (params: TweetQueryParams): Promise<ApiResponse<PaginatedResponse<Tweet>>> => {
+  loadMoreTweets: async (params: TweetQueryParams): Promise<PaginatedResponse<Tweet>> => {
     const response = await apiClient.get<PaginatedResponse<Tweet>>(`/tweets`, { params });
-    return {
-      data: response.data,
-      success: true,
-    };
+    return response.data;
   },
 };

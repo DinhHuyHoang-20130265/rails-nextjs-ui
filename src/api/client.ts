@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { routerService } from '@/helpers/router';
 
 // API Configuration
 export const API_CONFIG = {
@@ -61,7 +62,7 @@ apiClient.interceptors.response.use(
         const isAuthPage = currentPath.startsWith('/auth/');
         
         if (!isAuthPage) {
-          window.location.href = '/auth/sign-in';
+          routerService.push('/auth/sign-in');
         }
       }
     }

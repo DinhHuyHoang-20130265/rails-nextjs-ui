@@ -35,9 +35,8 @@ const getToken = (response: AxiosResponse<AuthResponse>) => {
 // Authentication API Functions
 export const authApi = {
   // Sign in user
-  signIn: async (credentials: SignInForm): Promise<ApiResponse<AuthResponse>> => {
+  signIn: async (credentials: SignInForm): Promise<AuthResponse> => {
     try {
-      
       const response = await apiClient.post<AuthResponse>('/users/sign_in', {
         user: credentials
       });
@@ -45,13 +44,7 @@ export const authApi = {
       if (response.status === 200 && response.data) {
         const token = getToken(response);
         setAuthToken(token);
-        
-        // Transform Rails response to match frontend ApiResponse format
-        return {
-          data: response.data,
-          message: response.data.message,
-          success: true
-        };
+        return response.data;
       }
       throw new Error('Invalid response format');
     } catch (error) {
@@ -61,9 +54,9 @@ export const authApi = {
   },
 
   // Sign up new user
-  signUp: async (userData: SignUpForm): Promise<ApiResponse<AuthResponse>> => {
+  signUp: async (userData: SignUpForm): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<ApiResponse<AuthResponse>>('/users/sign_up', userData);
+      const response = await apiClient.post<AuthResponse>('/users', { user: userData });
       return response.data;
     } catch (error) {
       throw error;
@@ -71,21 +64,19 @@ export const authApi = {
   },
 
   // Send forgot password email
-  sendForgotPasswordEmail: async (email: string): Promise<ApiResponse<{ message: string }>> => {
-
+  sendForgotPasswordEmail: async (email: string): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>('/users/forgot_password', { email });
+      const response = await apiClient.post<{ message: string }>('/users/forgot_password', { email });
       return response.data;
     } catch (error) {
       throw error;
     }
-
   },
 
   // Verify OTP for password reset
-  verifyOtp: async (data: VerifyOtpRequest): Promise<ApiResponse<{ valid: boolean }>> => {
+  verifyOtp: async (data: VerifyOtpRequest): Promise<{ valid: boolean }> => {
     try {
-      const response = await apiClient.post<ApiResponse<{ valid: boolean }>>('/users/verify_otp', data);
+      const response = await apiClient.post<{ valid: boolean }>('/users/verify_otp', data);
       return response.data;
     } catch (error) {
       throw error;
@@ -93,9 +84,9 @@ export const authApi = {
   },
 
   // Reset password
-  resetPassword: async (data: ResetPasswordRequest): Promise<ApiResponse<{ message: string }>> => {
+  resetPassword: async (data: ResetPasswordRequest): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>('/users/reset_password', data);
+      const response = await apiClient.post<{ message: string }>('/users/reset_password', data);
       return response.data;
     } catch (error) {
       throw error;
@@ -103,9 +94,9 @@ export const authApi = {
   },
 
   // Resend OTP
-  resendOtp: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+  resendOtp: async (email: string): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>('/users/resend_otp', { email });
+      const response = await apiClient.post<{ message: string }>('/users/resend_otp', { email });
       return response.data;
     } catch (error) {
       throw error;
@@ -113,35 +104,26 @@ export const authApi = {
   },
 
   // Get current user (for session validation)
-  getCurrentUser: async (): Promise<ApiResponse<User>> => {
+  getCurrentUser: async (): Promise<{ user: User }> => {
     console.log('Getting current user');
     
     try {
       const response = await apiClient.get<{ user: User }>('/users/me');
-      // Transform Rails response to match frontend ApiResponse format
-      return {
-        data: response.data.user,
-        success: true
-      };
+      return response.data;
     } catch (error) {
       throw error;
     }
   },
 
   // Sign out
-  signOut: async (): Promise<ApiResponse<{ message: string }>> => {
+  signOut: async (): Promise<{ message: string }> => {
     try {
       const response = await apiClient.delete<{ message: string }>('/users/sign_out');
       
       // Clear the token after successful sign out
       setAuthToken(null);
       
-      // Transform Rails response to match frontend ApiResponse format
-      return {
-        data: response.data,
-        message: response.data.message,
-        success: true
-      };
+      return response.data;
     } catch (error) {
       throw error;
     }

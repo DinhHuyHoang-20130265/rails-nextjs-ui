@@ -5,6 +5,7 @@ import "./globals.css";
 import { AppProvider } from "@/contexts/AppContext";
 import SWRProvider from "@/components/SWRProvider";
 import AuthGuard from "@/components/AuthGuard";
+import { RouterProvider } from "@/components/RouterProvider";
 
 export const metadata: Metadata = {
   title: "Tweet UI",
@@ -29,11 +30,13 @@ export default function RootLayout({
       <body>
         <SWRProvider>
           <AppProvider>
-            <AuthGuard>
-              <div className="d-flex flex-column align-items-center bg-background h-100">
-                {children}
-              </div>
-            </AuthGuard>
+            <RouterProvider>
+              <AuthGuard>
+                <div className="d-flex flex-column align-items-center bg-background h-100">
+                  {children}
+                </div>
+              </AuthGuard>
+            </RouterProvider>
           </AppProvider>
         </SWRProvider>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" />

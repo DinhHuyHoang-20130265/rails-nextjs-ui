@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { Reply } from '@/types';
+import { useCurrentUser, useDeleteReply, useUpdateReply } from '@/hooks/useApi';
 
 interface ReplyCardProps {
   reply: Reply;
-  onReplyUpdated: (reply: Reply) => void;
-  onReplyDeleted: (replyId: number) => void;
 }
 
-export default function ReplyCard({ reply, onReplyUpdated, onReplyDeleted }: ReplyCardProps) {
+export default function ReplyCard({ reply }: ReplyCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(reply.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { deleteReply } = useDeleteReply(reply.parent_id);
+  const { updateReply } = useUpdateReply(reply.parent_id);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -40,16 +40,7 @@ export default function ReplyCard({ reply, onReplyUpdated, onReplyDeleted }: Rep
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const updatedReply: Reply = {
-        ...reply,
-        content: editContent.trim(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      onReplyUpdated(updatedReply);
+      await updateReply({ id: reply.id, content: editContent.trim() });
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating reply:', error);
@@ -67,9 +58,7 @@ export default function ReplyCard({ reply, onReplyUpdated, onReplyDeleted }: Rep
   const handleDelete = async () => {
     if (window.confirm('Are you sure?')) {
       try {
-        // TODO: Implement actual API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        onReplyDeleted(reply.id);
+        await deleteReply(reply.id);
       } catch (error) {
         console.error('Error deleting reply:', error);
         alert('Failed to delete reply. Please try again.');
@@ -77,8 +66,8 @@ export default function ReplyCard({ reply, onReplyUpdated, onReplyDeleted }: Rep
     }
   };
 
-  const currentUserId = 1; // Mock current user ID
-  const canEdit = reply.user_id === currentUserId;
+  const { user: currentUser } = useCurrentUser();
+  const canEdit = reply.user?.id === currentUser?.id;
 
   return (
     <div id={`reply-${reply.id}`}>

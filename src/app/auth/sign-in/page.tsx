@@ -1,11 +1,14 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { SignInForm } from '@/types';
 import { authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
 
 export default function SignInPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState<SignInForm>({
     username: '',
     password: '',
@@ -46,17 +49,18 @@ export default function SignInPage() {
     try {
       await authApi.signIn(formData);
       showToast('Sign in successful', 'success');
-      window.location.href = '/';
+      router.push('/');
     } catch (error: any) {
       console.log(error);
-      setErrors([error.message || 'Invalid username or password. Please try again.']);
+      setErrors(error.errors ? error.errors.map((error: any) => "- " + error) : 
+        ['Invalid username or password. Please try again.']);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isFormValid = () => {
-    return formData.username.length >= 3 && formData.password.length >= 1;
+    return formData.username && formData.password;
   };
 
   return (
@@ -94,7 +98,7 @@ export default function SignInPage() {
               value={formData.username}
               onChange={handleInputChange}
               required
-              minLength={3}
+              minLength={1}
               className="form-control"
               autoFocus
             />
@@ -129,14 +133,14 @@ export default function SignInPage() {
         <div className="mt-3">
           <p className="small">
             Don't have an account?{' '}
-            <a href="/auth/sign-up" className="text-decoration-none">
+            <Link href="/auth/sign-up" className="text-decoration-none">
               Sign up
-            </a>
+            </Link>
           </p>
           <p className="small">
-            <a href="/auth/forgot-password" className="text-decoration-none">
+            <Link href="/auth/forgot-password" className="text-decoration-none">
               Forgot your password?
-            </a>
+            </Link>
           </p>
         </div>
       </section>

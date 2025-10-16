@@ -1,10 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { StageProps } from '@/types/forgot-password';
 import { validatePasswordReset } from '../helpers/validation';
-import { resetPassword, redirectToLogin } from '../helpers/api';
+import { authApi } from '@/api';
+import { routerService } from '@/helpers/router';
 
 export default function ResetStage({ state, actions }: StageProps) {
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     actions.setIsSubmitting(true);
@@ -19,10 +22,10 @@ export default function ResetStage({ state, actions }: StageProps) {
         return;
       }
 
-      await resetPassword(state.formData.email, state.formData.newPassword, state.formData.otp);
+      await authApi.resetPassword({ email: state.formData.email, newPassword: state.formData.newPassword, otp: state.formData.otp });
       
       // Redirect to login page
-      redirectToLogin();
+      routerService.push('/auth/sign-in');
       
     } catch (error) {
       actions.setErrors(['An error occurred while resetting your password. Please try again.']);
@@ -101,9 +104,9 @@ export default function ResetStage({ state, actions }: StageProps) {
         <div className="mt-3 text-center">
           <p className="small">
             Remember your password?{' '}
-            <a href="/auth/sign-in" className="text-decoration-none">
+            <Link href="/auth/sign-in" className="text-decoration-none">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </section>

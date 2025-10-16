@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Tweet, TweetForm as TweetFormData } from '@/types';
+import { TweetForm as TweetFormData } from '@/types';
 
 interface TweetFormProps {
-  onTweetCreated: (tweet: Tweet) => void;
+  onTweetCreated: (tweet: { content: string }) => void;
   onCancel: () => void;
   initialContent?: string;
 }
@@ -34,37 +34,10 @@ export default function TweetForm({ onTweetCreated, onCancel, initialContent = '
     setErrors([]);
 
     try {
-      // TODO: Implement actual API call
-      console.log('Tweet data:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock created tweet
-      const newTweet: Tweet = {
-        id: Date.now(), // Mock ID
-        content: formData.content,
-        user_id: 1, // Mock user ID
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user: {
-          id: 1,
-          username: 'demo_user',
-          display_name: 'Demo User',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        reply_count: 0,
-      };
-      
-      onTweetCreated(newTweet);
-      
-      // Reset form
+      await onTweetCreated({ content: formData.content });
       setFormData({ content: '' });
     } catch (error) {
-      setErrors(['An error occurred while posting the tweet. Please try again.']);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error creating tweet:', error);
     }
   };
 

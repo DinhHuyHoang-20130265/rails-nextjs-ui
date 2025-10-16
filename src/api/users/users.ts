@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from '../client';
+import { apiClient } from '../client';
 import { User } from '@/types';
 
 // Users API Response Types
@@ -7,6 +7,9 @@ export interface UpdateUserRequest {
   username?: string;
   display_name?: string;
   email?: string;
+  password?: string;
+  password_confirmation?: string;
+  current_password?: string;
 }
 
 export interface UserQueryParams {
@@ -19,40 +22,15 @@ export interface UserQueryParams {
 // Users API Functions
 export const usersApi = {
   // Get single user by ID
-  getUser: async (id: number): Promise<ApiResponse<User>> => {
-    
+  getUser: async (id: number): Promise<User> => {
     const user = await apiClient.get<User>(`/users/${id}`);
-    if (!user) {
-      throw {
-        message: 'User not found',
-        status: 404,
-        errors: ['User does not exist'],
-      };
-    }
-    
-    return {
-      data: user.data,
-      success: true,
-    };
+    return user.data;
   },
 
   // Update user profile
-  updateUser: async (userData: UpdateUserRequest): Promise<ApiResponse<User>> => {
-    
-    const user = await apiClient.put<User>(`/users/${userData.id}`, userData);
-    if (!user) {
-      throw {
-        message: 'User not found',
-        status: 404,
-        errors: ['User does not exist'],
-      };
-    }
-    
-    return {
-      data: user.data,
-      success: true,
-      message: 'Profile updated successfully',
-    };
+  updateUser: async (userData: UpdateUserRequest): Promise<User> => {
+    const user = await apiClient.patch<User>(`/users/${userData.id}`, { user: userData });
+    return user.data;
   },
 
 };
