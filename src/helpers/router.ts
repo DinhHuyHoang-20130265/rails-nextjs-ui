@@ -1,10 +1,10 @@
-import { NextRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 // Router service for client-side navigation
 class RouterService {
-  private router: NextRouter | null = null;
+  private router: ReturnType<typeof useRouter> | null = null;
 
-  setRouter(router: NextRouter) {
+  setRouter(router: ReturnType<typeof useRouter>) {
     this.router = router;
   }
 
