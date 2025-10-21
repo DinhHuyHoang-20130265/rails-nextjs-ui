@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { apiClient, ApiResponse, setAuthToken } from '../client';
+import { apiClient, setAuthToken } from '../client';
 import { User, SignInForm, SignUpForm } from '@/types';
 
 // Auth API Response Types

@@ -1,8 +1,10 @@
+import { NextRouter } from "next/router";
+
 // Router service for client-side navigation
 class RouterService {
-  private router: any = null;
+  private router: NextRouter | null = null;
 
-  setRouter(router: any) {
+  setRouter(router: NextRouter) {
     this.router = router;
   }
 

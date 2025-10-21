@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { SignInForm } from '@/types';
 import { authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
+import { ApiError } from '@/api/client'
 
 export default function SignInPage() {
   const router = useRouter();
@@ -50,9 +51,10 @@ export default function SignInPage() {
       await authApi.signIn(formData);
       showToast('Sign in successful', 'success');
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(error);
-      setErrors(error.errors ? error.errors.map((error: any) => "- " + error) : 
+      setErrors(error instanceof Error ? 
+        (error as unknown as ApiError).errors?.map((error: string) => "- " + error) ?? [] : 
         ['Invalid username or password. Please try again.']);
     } finally {
       setIsSubmitting(false);
@@ -132,7 +134,7 @@ export default function SignInPage() {
 
         <div className="mt-3">
           <p className="small">
-            Don't have an account?{' '}
+            Do not have an account?{" "}
             <Link href="/auth/sign-up" className="text-decoration-none">
               Sign up
             </Link>

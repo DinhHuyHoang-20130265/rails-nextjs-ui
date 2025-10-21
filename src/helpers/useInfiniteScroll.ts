@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-const debounce = (func: (...args: any[]) => void, delay: number) => {
+const debounce = (func: (...args: unknown[]) => void, delay: number) => {
   let timeoutId: ReturnType<typeof setTimeout>;
-  return function (...args: any[]) {
+  return function (...args: unknown[]) {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }

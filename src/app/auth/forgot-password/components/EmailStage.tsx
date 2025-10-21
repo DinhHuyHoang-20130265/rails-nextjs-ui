@@ -31,6 +31,7 @@ export default function EmailStage({ state, actions }: StageProps) {
       startCountdown(60, actions.setCountdown, () => {});
       
     } catch (error) {
+      console.log(error);
       actions.setErrors(['An error occurred while sending the reset code. Please try again.']);
     } finally {
       actions.setIsSubmitting(false);
@@ -43,7 +44,7 @@ export default function EmailStage({ state, actions }: StageProps) {
       
       <section className="w-50">
         <p className="text-muted mb-4">
-          Enter the email address associated with your account and we'll send you a verification code.
+          Enter the email address associated with your account and we will send you a verification code.{" "}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -87,7 +88,7 @@ export default function EmailStage({ state, actions }: StageProps) {
 
         <div className="mt-3 text-center">
           <p className="small">
-            Remember your password?{' '}
+            Remember your password?{" "}
             <Link href="/auth/sign-in" className="text-decoration-none">
               Sign in
             </Link>

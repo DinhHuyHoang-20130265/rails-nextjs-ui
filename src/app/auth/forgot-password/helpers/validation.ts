@@ -5,10 +5,10 @@ export const validateEmail = async (email: string): Promise<{ isValid: boolean; 
   try {
     await authApi.sendForgotPasswordEmail(email);
     return { isValid: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       isValid: false,
-      error: error.message || 'An error occurred while sending the reset code.'
+      error: error instanceof Error ? error.message : 'An error occurred while sending the reset code.'
     };
   }
 };
@@ -17,10 +17,10 @@ export const validateOtp = async (email: string, otp: string): Promise<{ isValid
   try {
     await authApi.verifyOtp({ email, otp });
     return { isValid: true };
-  } catch (error: any) {
+    } catch (error: unknown) {
     return {
       isValid: false,
-      error: error.message || 'An error occurred while verifying the code.'
+      error: error instanceof Error ? error.message : 'An error occurred while verifying the code.'
     };
   }
 };

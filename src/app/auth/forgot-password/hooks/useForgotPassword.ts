@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ForgotPasswordState, ForgotPasswordActions, ForgotPasswordForm } from '@/types/forgot-password';
+import { ForgotPasswordState, ForgotPasswordActions } from '@/types/forgot-password';
 import { formatOtpInput } from '../helpers/utils';
 
 export const useForgotPassword = (): { state: ForgotPasswordState; actions: ForgotPasswordActions } => {

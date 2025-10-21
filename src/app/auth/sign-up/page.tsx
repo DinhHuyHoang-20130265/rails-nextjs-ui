@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { SignUpForm } from '@/types';
-import { authApi } from '@/api';
+import { ApiError, authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
 
 // Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit
@@ -44,11 +44,12 @@ export default function SignUpPage() {
       showToast('Sign up successful, please sign in to continue', 'success');
       // Redirect to home
       router.push('/auth/sign-in');
-    } catch (error: any) {
-      showToast('Sign up failed, please try again', 'error');
-      setErrors(error.errors ? error.errors.map((error: any) => "- " + error) :
-        ['An error occurred during sign up. Please try again.']);
+    } catch (error: unknown) {
       console.log(error);
+      showToast('Sign up failed, please try again', 'error');
+      setErrors(error instanceof Error ? 
+        (error as unknown as ApiError).errors?.map((error: string) => "- " + error) ?? [] :
+        ['An error occurred during sign up. Please try again.']);
     } finally {
       setIsSubmitting(false);
     }

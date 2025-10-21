@@ -247,7 +247,7 @@ export const useUpdateUser = () => {
 // Generic mutation hook for API calls
 export const useApiMutation = <T>() => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
 
   const mutate = async (apiCall: () => Promise<T>) => {
     if (!getAuthToken()) {
@@ -260,7 +260,7 @@ export const useApiMutation = <T>() => {
     try {
       const result = await apiCall();
       return result;
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err);
       throw err;
     } finally {

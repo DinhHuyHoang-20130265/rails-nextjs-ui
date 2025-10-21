@@ -25,6 +25,7 @@ export default function OtpStage({ state, actions }: StageProps) {
       actions.setStage('reset');
       
     } catch (error) {
+      console.log(error);
       actions.setErrors(['An error occurred while verifying the code. Please try again.']);
     } finally {
       actions.setIsSubmitting(false);
@@ -43,6 +44,7 @@ export default function OtpStage({ state, actions }: StageProps) {
       startCountdown(60, actions.setCountdown, () => {});
       
     } catch (error) {
+      console.log(error);
       actions.setErrors(['Failed to resend code. Please try again.']);
     } finally {
       actions.setIsResending(false);
@@ -55,7 +57,7 @@ export default function OtpStage({ state, actions }: StageProps) {
       
       <section className="w-50">
         <p className="text-muted mb-4">
-          We've sent a 6-digit verification code to <strong>{state.formData.email}</strong>
+          We have sent a 6-digit verification code to{" "}<strong>{state.formData.email}</strong>
         </p>
         <p className="small text-muted mb-4">
           Please check your email and enter the code below. (For demo: use any 6-digit code ending in 1, 2, or 3)
@@ -104,7 +106,7 @@ export default function OtpStage({ state, actions }: StageProps) {
 
         <div className="mt-3 text-center">
           <p className="small text-muted">
-            Didn't receive the code?{' '}
+            Did not receive the code?
             {state.countdown > 0 ? (
               <span>Resend in {state.countdown}s</span>
             ) : (

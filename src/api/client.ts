@@ -13,7 +13,7 @@ export const API_CONFIG = {
 };
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
   data: T;
   message?: string;
   success: boolean;
@@ -47,7 +47,7 @@ apiClient.interceptors.request.use(
 
 // Response interceptor
 apiClient.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  <T>(response: AxiosResponse<ApiResponse<T>>) => {
     return response;
   },
   (error) => {

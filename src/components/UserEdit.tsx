@@ -55,8 +55,8 @@ const UserEdit: React.FC<UserEditProps> = ({ userId, onSave, onCancel }) => {
           password_confirmation: '',
           current_password: '',
         });
-      } catch (error: any) {
-        console.error('Error loading user:', error);
+      } catch (error: unknown) {
+        console.log(error);
         showToast('Failed to load user data', 'error');
         if (onCancel) onCancel();
       } finally {
@@ -134,9 +134,9 @@ const UserEdit: React.FC<UserEditProps> = ({ userId, onSave, onCancel }) => {
         // Default navigation behavior
         routerService.push('/');
       }
-    } catch (error: any) {
-      console.error('Error updating user:', error);
-      const message = error?.response?.data?.message || 'Failed to update profile';
+    } catch (error: unknown) {
+      console.log(error);
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
       showToast(message, 'error');
     } finally {
       setIsSaving(false);

@@ -6,7 +6,7 @@ interface ReplyListProps {
 }
 
 const ReplyList = ({ tweetId }: ReplyListProps) => {
-    const { replies, pagination, isLoading, error, setSize } = useReplies(tweetId, { page: 1, per_page: 5 });
+    const { replies, pagination, isLoading, setSize } = useReplies(tweetId, { page: 1, per_page: 5 });
     const hasMoreReplies = pagination?.has_more || false;
     const handleLoadMoreReplies = () => {
         setSize((prevSize) => prevSize + 1);

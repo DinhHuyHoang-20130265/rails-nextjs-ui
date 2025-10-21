@@ -1,5 +1,5 @@
-import { apiClient, ApiResponse } from '../client';
-import { Tweet, TweetFilters, PaginatedResponse } from '@/types';
+import { apiClient } from '../client';
+import { Tweet, PaginatedResponse } from '@/types';
 
 // Tweets API Response Types
 export interface CreateTweetRequest {

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { User, Tweet } from '@/types';
 import { useCurrentUser, useTweets } from '@/hooks/useApi';
 
@@ -33,23 +33,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!currentUser;
 
   // Tweet management functions
-  const addTweet = (tweet: Tweet) => {
+  const addTweet = () => {
     // Optimistically update the cache
     mutateTweets();
   };
 
-  const updateTweet = (updatedTweet: Tweet) => {
+  const updateTweet = () => {
     // Optimistically update the cache
     mutateTweets();
   };
 
-  const deleteTweet = (tweetId: number) => {
+  const deleteTweet = () => {
     // Optimistically update the cache
     mutateTweets();
   };
 
   // User management functions
-  const setCurrentUser = (user: User | null) => {
+  const setCurrentUser = () => {
     mutateUser?.();
   };
 

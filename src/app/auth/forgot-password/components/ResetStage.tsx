@@ -28,6 +28,7 @@ export default function ResetStage({ state, actions }: StageProps) {
       routerService.push('/auth/sign-in');
       
     } catch (error) {
+      console.log(error);
       actions.setErrors(['An error occurred while resetting your password. Please try again.']);
     } finally {
       actions.setIsSubmitting(false);

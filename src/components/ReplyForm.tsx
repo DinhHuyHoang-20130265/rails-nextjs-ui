@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useCreateReply, useUpdateReply, useDeleteReply } from '@/hooks/useApi';
+import { useCreateReply } from '@/hooks/useApi';
 
 interface ReplyFormProps {
   tweetId: number;
@@ -13,8 +13,6 @@ export default function ReplyForm({ tweetId, onCancel }: ReplyFormProps) {
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createReply } = useCreateReply(tweetId);
-  const { updateReply } = useUpdateReply(tweetId);
-  const { deleteReply } = useDeleteReply(tweetId);
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { value } = e.target;
     setContent(value);
