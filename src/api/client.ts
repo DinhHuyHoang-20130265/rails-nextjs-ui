@@ -71,7 +71,7 @@ apiClient.interceptors.response.use(
     const apiError: ApiError = {
       message: error.response?.data?.message || error.message || 'An error occurred',
       status: error.response?.status || 0,
-      errors: error.response?.data?.errors || [],
+      errors: error.response?.data?.errors || [error.response?.data?.error] || [],
     };
     
     return Promise.reject(apiError);

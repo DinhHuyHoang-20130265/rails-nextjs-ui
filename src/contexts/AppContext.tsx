@@ -18,7 +18,6 @@ interface AppContextType {
   
   // Loading states
   isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
 
 }
 
@@ -65,7 +64,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateTweet,
     deleteTweet,
     isLoading,
-    setIsLoading: () => {}, // Not needed with SWR
   };
 
   return (

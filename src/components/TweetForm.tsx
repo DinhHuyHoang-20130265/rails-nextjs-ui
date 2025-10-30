@@ -1,67 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { TweetForm as TweetFormData } from '@/types';
+import { useFormStatus } from 'react-dom';
 
 interface TweetFormProps {
-  onTweetCreated: (tweet: { content: string }) => void;
+  formAction: (formData: FormData) => void | Promise<void>;
   onCancel: () => void;
   initialContent?: string;
 }
 
-export default function TweetForm({ onTweetCreated, onCancel, initialContent = '' }: TweetFormProps) {
-  const [formData, setFormData] = useState<TweetFormData>({
-    content: initialContent,
-  });
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className="btn btn-primary me-2"
+      disabled={pending}
+    >
+      {pending ? 'Posting...' : 'Post'}
+    </button>
+  );
+}
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      content: value,
-    }));
-    // Clear errors when user starts typing
-    if (errors.length > 0) {
-      setErrors([]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors([]);
-
-    try {
-      await onTweetCreated({ content: formData.content });
-      setFormData({ content: '' });
-    } catch (error) {
-      console.error('Error creating tweet:', error);
-    }
-  };
-
-  const isFormValid = () => {
-    return formData.content.trim().length > 0;
-  };
-
+export default function TweetForm({ formAction, onCancel, initialContent = '' }: TweetFormProps) {
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        {errors.length > 0 && (
-          <div className="alert alert-danger">
-            <ul className="mb-0">
-              {errors.map((error, index) => (
-                <li key={index}>{error}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        
+      <form action={formAction}>
         <div className="form-floating">
           <textarea
-            value={formData.content}
-            onChange={handleInputChange}
+            name="content"
+            defaultValue={initialContent}
             rows={4}
             required
             minLength={1}
@@ -73,19 +40,11 @@ export default function TweetForm({ onTweetCreated, onCancel, initialContent = '
         </div>
         
         <div className="w-100 text-center mt-3">
-          <button
-            type="submit"
-            className="btn btn-primary me-2"
-            disabled={!isFormValid() || isSubmitting}
-          >
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </button>
-          
+          <SubmitButton />
           <button
             type="button"
             className="btn btn-secondary"
             onClick={onCancel}
-            disabled={isSubmitting}
           >
             Cancel
           </button>

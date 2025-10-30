@@ -2,67 +2,49 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { SignUpForm } from '@/types';
+import { useActionState } from 'react';
 import { ApiError, authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
 
 // Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit
-const passwordRegex = /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}\z/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
+interface SignUpState {
+  ok: boolean;
+  errors: string[];
+}
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<SignUpForm>({
-    username: '',
-    display_name: '',
-    password: '',
-    password_confirmation: '',
-  });
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear errors when user starts typing
-    if (errors.length > 0) {
-      setErrors([]);
+  async function signUpAction(prevState: SignUpState, formData: FormData): Promise<SignUpState> {
+    const display_name = String(formData.get('display_name') ?? '').trim();
+    const username = String(formData.get('username') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
+    const password_confirmation = String(formData.get('password_confirmation') ?? '');
+
+    const errs: string[] = [];
+    if (!username) errs.push('- Username is required.');
+    if (!passwordRegex.test(password)) errs.push('- Password must be 8+ chars, include upper, lower and digit.');
+    if (password !== password_confirmation) errs.push('- Password confirmation does not match.');
+
+    if (errs.length > 0) {
+      return { ok: false, errors: errs };
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors([]);
 
     try {
-      await authApi.signUp(formData);
-
+      await authApi.signUp({ display_name, username, password, password_confirmation });
       showToast('Sign up successful, please sign in to continue', 'success');
-      // Redirect to home
       router.push('/auth/sign-in');
+      return { ok: true, errors: [] };
     } catch (error: unknown) {
-      console.log(error);
+      const apiErrors = (error as unknown as ApiError).errors?.map((e: string) => `- ${e}`) ?? ['- An error occurred during sign up. Please try again.'];
       showToast('Sign up failed, please try again', 'error');
-      setErrors(error instanceof Error ? 
-        (error as unknown as ApiError).errors?.map((error: string) => "- " + error) ?? [] :
-        ['An error occurred during sign up. Please try again.']);
-    } finally {
-      setIsSubmitting(false);
+      return { ok: false, errors: apiErrors };
     }
-  };
+  }
 
-  const isFormValid = () => {
-    return (
-      formData.display_name &&
-      formData.username &&
-      passwordRegex.test(formData.password) &&
-      formData.password === formData.password_confirmation
-    );
-  };
+  const [state, formAction, isPending] = useActionState<SignUpState, FormData>(signUpAction, { ok: false, errors: [] });
 
   return (
     <div className="container-fluid w-50">
@@ -71,11 +53,11 @@ export default function SignUpPage() {
       </h2>
 
       <section className="w-50">
-        <form onSubmit={handleSubmit}>
-          {errors.length > 0 && (
+        <form action={formAction}>
+          {state.errors.length > 0 && (
             <div className="alert alert-danger">
               <ul className="mb-0 p-0">
-                {errors.map((error, index) => (
+                {state.errors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}
               </ul>
@@ -90,8 +72,6 @@ export default function SignUpPage() {
               type="text"
               id="display_name"
               name="display_name"
-              value={formData.display_name}
-              onChange={handleInputChange}
               className="form-control"
               autoFocus
             />
@@ -105,8 +85,6 @@ export default function SignUpPage() {
               type="text"
               id="username"
               name="username"
-              value={formData.username}
-              onChange={handleInputChange}
               required
               minLength={1}
               className="form-control"
@@ -124,10 +102,8 @@ export default function SignUpPage() {
               type="password"
               id="password"
               name="password"
-              value={formData.password}
-              onChange={handleInputChange}
               required
-              minLength={6}
+              minLength={8}
               className="form-control"
             />
           </div>
@@ -140,10 +116,8 @@ export default function SignUpPage() {
               type="password"
               id="password_confirmation"
               name="password_confirmation"
-              value={formData.password_confirmation}
-              onChange={handleInputChange}
               required
-              minLength={6}
+              minLength={8}
               className="form-control"
             />
           </div>
@@ -152,9 +126,9 @@ export default function SignUpPage() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={!isFormValid() || isSubmitting}
+              disabled={isPending}
             >
-              {isSubmitting ? 'Signing up...' : 'Sign up'}
+              {isPending ? 'Signing up...' : 'Sign up'}
             </button>
           </div>
         </form>

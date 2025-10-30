@@ -2,19 +2,17 @@
 
 import { useState } from 'react';
 import { Tweet } from '@/types';
-import ReplyForm from '@/components/ReplyForm';
 import { useCurrentUser, useDeleteTweet } from '@/hooks/useApi';
-import { showToast } from '@/helpers/showToast';
 import ReplyList from './ReplyList';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 
 interface TweetCardProps {
   tweet: Tweet;
-  onTweetUpdated: (tweet: Tweet) => void;
+  updateTweetFormAction: (formData: FormData) => void;
   onTweetDeleted: () => void;
 }
 
-export default function TweetCard({ tweet, onTweetUpdated, onTweetDeleted }: TweetCardProps) {
-  const [showReplyForm, setShowReplyForm] = useState(false);
+export default function TweetCard({ tweet, updateTweetFormAction, onTweetDeleted }: TweetCardProps) {
   const { deleteTweet } = useDeleteTweet();
   const [showEditForm, setShowEditForm] = useState(false);
   const formatDate = (dateString: string) => {
@@ -44,78 +42,59 @@ export default function TweetCard({ tweet, onTweetUpdated, onTweetDeleted }: Twe
 
   const { user: currentUser } = useCurrentUser();
   const canEdit = tweet.user?.id === currentUser?.id;
-  
+  const isOptimistic = typeof (tweet as any).id !== 'number' || !Number.isFinite((tweet as any).id);
+
   return (
     showEditForm ? (
       <TweetFormEdit
-        tweet={tweet} 
-        onTweetUpdated={onTweetUpdated} 
+        tweet={tweet}
+        updateTweetFormAction={updateTweetFormAction}
         style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
         onCancel={() => setShowEditForm(false)} />
     ) : (
-    <article
-      id={`tweet-${tweet.id}`}
-      style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
-    >
-      <div className="d-flex flex-row justify-content-between align-items-center mb-2">
-        <p className="p-0 m-0">
-          <i className="fa-solid fa-user"></i>
-          <strong> {tweet.user?.display_name || 'Unknown User'}</strong>
-        </p>
+      <article
+        id={`tweet-${tweet.id}`}
+        style={{ border: '1px solid rgb(201 201 201)', borderRadius: '10px', padding: '8px', margin: '5px' }}
+      >
+        <div className="d-flex flex-row justify-content-between align-items-center mb-2">
+          <p className="p-0 m-0">
+            <i className="fa-solid fa-user"></i>
+            <strong> {tweet.user?.display_name || 'Unknown User'}</strong>
+          </p>
 
-        <div className="d-flex align-items-center gap-2">
-          <small>
-            <i className="fa-solid fa-clock"></i>
-            {formatDate(tweet.created_at)}
-          </small>
+          <div className="d-flex align-items-center gap-2">
+            <small>
+              <i className="fa-solid fa-clock"></i>
+              {formatDate(tweet.created_at)}
+            </small>
 
-          {canEdit && (
-            <div className="dropdown" style={{ justifySelf: 'right', cursor: 'pointer' }}>
-              <i
-                className="fa-solid fa-gear"
-                data-bs-toggle="dropdown"
-                style={{ cursor: 'pointer' }}
-              ></i>
-              <div className="dropdown-menu dropdown-menu-end">
-                <button
-                  className="dropdown-item"
-                  onClick={() => setShowEditForm(true)}
-                >
-                  <i className="fa-solid fa-pencil"></i> Edit
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={handleDelete}
-                >
-                  <i className="fa-solid fa-trash"></i> Delete
-                </button>
-              </div>
+            {canEdit &&
+              <Menu>
+                <MenuButton>
+                  <i className="fa-solid fa-gear"></i>
+                </MenuButton>
+                <MenuItems anchor="bottom" className="flex flex-col bg-white rounded-lg shadow-lg p-2">
+                  <MenuItem as="button" className="w-full align-items-center" onClick={() => setShowEditForm(true)}>
+                    <i className="fa-solid fa-pencil"></i> Edit
+                  </MenuItem>
+                  <MenuItem as="button" className="w-full align-items-center" onClick={handleDelete}>
+                    <i className="fa-solid fa-trash"></i> Delete
+                  </MenuItem>
+                </MenuItems>
+              </Menu>
+            }
+          </div>
+        </div>
+
+        <div>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{tweet.content}</p>
+
+          {isOptimistic ? (
+            <div className="mt-2 pt-2">
             </div>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <p style={{ whiteSpace: 'pre-wrap' }}>{tweet.content}</p>
-
-        <ReplyList tweetId={tweet.id} />
-
-        <div className="mt-2 mb-2" style={{ borderTop: '1px solid rgb(201 201 201)' }}>
-          {showReplyForm ? (
-            <ReplyForm
-              tweetId={tweet.id}
-              onCancel={() => setShowReplyForm(false)}
-            />
           ) : (
-            <button
-              className="btn btn-sm btn-outline-primary mt-2"
-              onClick={() => setShowReplyForm(true)}
-            >
-              <i className="fa-solid fa-reply me-1"></i>
-              Reply
-            </button>
+            <ReplyList tweetId={tweet.id as unknown as number} />
           )}
-        </div>
         </div>
       </article>
     )
@@ -123,21 +102,25 @@ export default function TweetCard({ tweet, onTweetUpdated, onTweetDeleted }: Twe
 }
 
 
-export const TweetFormEdit = ({ tweet, onTweetUpdated, onCancel, style }: { tweet: Tweet, onTweetUpdated: (tweet: Tweet) => void, onCancel: () => void, style: React.CSSProperties }) => {
+export const TweetFormEdit = ({ tweet, updateTweetFormAction, onCancel, style }:
+  {
+    tweet: Tweet, updateTweetFormAction: (formData: FormData) => void,
+    onCancel: () => void,
+    style: React.CSSProperties
+  }
+) => {
   const [content, setContent] = useState(tweet.content);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onTweetUpdated({ ...tweet, content });
-    onCancel();
-    showToast('Tweet updated successfully', 'success');
-  };
   return (
     <div style={style}>
-      <form onSubmit={handleSubmit}>
+      <form action={(formData: FormData) => {
+        onCancel();
+        updateTweetFormAction(formData);
+      }}>
         <div className="mb-3">
           <label htmlFor="content" className="form-label">Content</label>
-          <textarea className="form-control" id="content" value={content} onChange={e => setContent(e.target.value)} />
+          <input type="hidden" name="tweet_id" value={tweet.id} />
+          <textarea name="content" className="form-control" id="content" value={content} onChange={e => setContent(e.target.value)} />
         </div>
         <button type="submit" className="btn btn-primary">Save</button>
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>

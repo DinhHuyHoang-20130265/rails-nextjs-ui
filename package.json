@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@headlessui/react": "^2.2.9",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
     "next": "15.5.4",
     "nextjs-toast-notify": "^1.54.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "swr": "^2.3.6"
   },
   "devDependencies": {

@@ -2,20 +2,18 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { SignInForm } from '@/types';
+import { useState, useEffect, useActionState } from 'react';
 import { authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
 import { ApiError } from '@/api/client'
 
+interface SignInState {
+  ok: boolean;
+  errors: string[];
+}
+
 export default function SignInPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<SignInForm>({
-    username: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
@@ -30,40 +28,28 @@ export default function SignInPage() {
     }
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear errors when user starts typing
-    if (errors.length > 0) {
-      setErrors([]);
-    }
-  };
+  async function signInAction(prevState: SignInState, formData: FormData): Promise<SignInState> {
+    const username = String(formData.get('username') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors([]);
+    if (!username || !password) {
+      return { ok: false, errors: ['- Username and password are required.'] };
+    }
 
     try {
-      await authApi.signIn(formData);
+      await authApi.signIn({ username, password });
       showToast('Sign in successful', 'success');
       router.push('/');
+      return { ok: true, errors: [] };
     } catch (error: unknown) {
-      console.log(error);
-      setErrors(error instanceof Error ? 
-        (error as unknown as ApiError).errors?.map((error: string) => "- " + error) ?? [] : 
-        ['Invalid username or password. Please try again.']);
-    } finally {
-      setIsSubmitting(false);
+      const apiErrors = 
+        (error as unknown as ApiError).errors?.map((err: string) => `- ${err}`) ?? 
+        ['- Invalid username or password. Please try again.'];
+      return { ok: false, errors: apiErrors };
     }
-  };
+  }
 
-  const isFormValid = () => {
-    return formData.username && formData.password;
-  };
+  const [state, formAction, isPending] = useActionState<SignInState, FormData>(signInAction, { ok: false, errors: [] });
 
   return (
     <div className="container-fluid w-50">
@@ -72,17 +58,17 @@ export default function SignInPage() {
       </h2>
       
       <section className="w-50">
-        <form onSubmit={handleSubmit}>
+        <form action={formAction}>
           {successMessage && (
             <div className="alert alert-success">
               {successMessage}
             </div>
           )}
           
-          {errors.length > 0 && (
+          {state.errors.length > 0 && (
             <div className="alert alert-danger">
               <ul className="mb-0 p-0">
-                {errors.map((error, index) => (
+                {state.errors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}
               </ul>
@@ -97,8 +83,6 @@ export default function SignInPage() {
               type="text"
               id="username"
               name="username"
-              value={formData.username}
-              onChange={handleInputChange}
               required
               minLength={1}
               className="form-control"
@@ -114,8 +98,6 @@ export default function SignInPage() {
               type="password"
               id="password"
               name="password"
-              value={formData.password}
-              onChange={handleInputChange}
               required
               className="form-control"
             />
@@ -125,9 +107,9 @@ export default function SignInPage() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={!isFormValid() || isSubmitting}
+              disabled={isPending}
             >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {isPending ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>

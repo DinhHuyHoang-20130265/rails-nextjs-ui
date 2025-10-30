@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Reply } from '@/types';
 import { useCurrentUser, useDeleteReply, useUpdateReply } from '@/hooks/useApi';
-
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 interface ReplyCardProps {
   reply: Reply;
 }
@@ -18,12 +18,12 @@ export default function ReplyCard({ reply }: ReplyCardProps) {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -80,34 +80,26 @@ export default function ReplyCard({ reply }: ReplyCardProps) {
                 <i className="fa-solid fa-user"></i>
                 {reply.user?.display_name || 'Unknown User'}
               </strong>
-              <div className="d-flex align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2 position-relative">
                 <small className="text-muted">{formatDate(reply.created_at)}</small>
-                {canEdit && (
-                  <div className="dropdown" style={{ cursor: 'pointer' }}>
-                    <i 
-                      className="fa-solid fa-gear"
-                      data-bs-toggle="dropdown" 
-                      style={{ cursor: 'pointer' }}
-                    ></i>
-                    <div className="dropdown-menu dropdown-menu-end">
-                      <button 
-                        className="dropdown-item" 
-                        onClick={handleEdit}
-                      >
-                        <i className="fa fa-pencil"></i> Edit
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={handleDelete}
-                      >
-                        <i className="fa fa-trash"></i> Delete
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {canEdit &&
+                  <Menu>
+                    <MenuButton>
+                      <i className="fa-solid fa-gear"></i>
+                    </MenuButton>
+                    <MenuItems anchor="bottom" className="flex flex-col bg-white rounded-lg shadow-lg p-2">
+                      <MenuItem as="button" className="w-full align-items-center" onClick={handleEdit}>
+                        <i className="fa-solid fa-pencil"></i> Edit
+                      </MenuItem>
+                      <MenuItem as="button" className="w-full align-items-center" onClick={handleDelete}>
+                        <i className="fa-solid fa-trash"></i> Delete
+                      </MenuItem>
+                    </MenuItems>
+                  </Menu>
+                }
               </div>
             </div>
-            
+
             <div className="mt-1">
               {isEditing ? (
                 <div className="mt-2">
