@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '@/types';
+import { SignInForm, User } from '@/types';
 import { authApi } from '@/api/auth/auth';
 import { mutate } from 'swr';
 
@@ -20,7 +20,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set,) => ({
       currentUser: null,
       isAuthenticated: false,
       checkingAuth: false,
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       signIn: async (credentials) => {
         set({ signingIn: true });
         try {
-          const { user } = await authApi.signIn(credentials as any);
+          const { user } = await authApi.signIn(credentials as SignInForm);
           set({ currentUser: user, isAuthenticated: true });
           await mutate('current-user');
           await mutate((key: unknown) => Array.isArray(key) && key[0] === 'tweets');

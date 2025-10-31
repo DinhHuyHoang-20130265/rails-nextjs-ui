@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Tweet } from '@/types';
-import { useCurrentUser, useDeleteTweet } from '@/hooks/useApi';
+import { useCurrentUser } from '@/hooks/useApi';
 import ReplyList from './ReplyList';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 
@@ -40,7 +40,9 @@ export default function TweetCard({ tweet, updateTweetFormAction, onTweetDeleted
 
   const { user: currentUser } = useCurrentUser();
   const canEdit = tweet.user?.id === currentUser?.id;
-  const isOptimistic = typeof (tweet as any).id !== 'number' || !Number.isFinite((tweet as any).id);
+  const isOptimistic =
+    typeof (tweet as unknown as { id: number }).id !== 'number' ||
+    !Number.isFinite((tweet as unknown as { id: number }).id);
 
   return (
     showEditForm ? (
