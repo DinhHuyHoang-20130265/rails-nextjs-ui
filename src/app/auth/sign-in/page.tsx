@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useActionState } from 'react';
-import { authApi } from '@/api';
 import { showToast } from '@/helpers/showToast';
 import { ApiError } from '@/api/client'
+import { useAuthStore } from '@/stores/authStore';
 
 interface SignInState {
   ok: boolean;
@@ -15,6 +15,8 @@ interface SignInState {
 export default function SignInPage() {
   const router = useRouter();
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const signIn = useAuthStore(s => s.signIn);
+  const signingIn = useAuthStore(s => s.signingIn);
 
   useEffect(() => {
     // Check for success message from URL params
@@ -37,7 +39,7 @@ export default function SignInPage() {
     }
 
     try {
-      await authApi.signIn({ username, password });
+      await signIn({ username, password });
       showToast('Sign in successful', 'success');
       router.push('/');
       return { ok: true, errors: [] };
@@ -107,9 +109,9 @@ export default function SignInPage() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isPending}
+              disabled={isPending || signingIn}
             >
-              {isPending ? 'Signing in...' : 'Sign in'}
+              {isPending || signingIn ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>

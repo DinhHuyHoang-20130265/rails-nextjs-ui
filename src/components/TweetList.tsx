@@ -1,24 +1,23 @@
 'use client';
 
-import { useState, useActionState, useOptimistic, startTransition } from 'react';
-import { SortDirection, SortOption, Tweet, TweetFilters } from '@/types';
+import { useActionState, useOptimistic, startTransition } from 'react';
+import { SortDirection, SortOption, Tweet } from '@/types';
 import TweetForm from '@/components/TweetForm';
 import TweetCard from '@/components/TweetCard';
-import { useTweets, useCreateTweet, useUpdateTweet, useCurrentUser } from '@/hooks/useApi';
+import { useTweets, useCreateTweet, useUpdateTweet, useCurrentUser, useDeleteTweet } from '@/hooks/useApi';
 import { useInfiniteScroll } from '@/helpers/useInfiniteScroll';
+import { useTweetsViewStore } from '@/stores/tweetsViewStore';
 
 interface CreateTweetState { ok: boolean; error?: string }
 interface UpdateTweetState { ok: boolean; error?: string }
-type OptimisticAction = { type: 'add', tweet: Tweet } | { type: 'reset' } | { type: 'update', tweet: Tweet };
+type OptimisticAction =
+  { type: 'add', tweet: Tweet } |
+  { type: 'reset' } |
+  { type: 'update', tweet: Tweet } |
+  { type: 'delete', tweetId: number }
 
 export default function TweetList() {
-  const [showForm, setShowForm] = useState(false);
-  const [filters, setFilters] = useState<TweetFilters>({
-    sort: 'date',
-    direction: 'desc',
-    page: 1,
-    per_page: 10,
-  });
+  const { filters, setFilters, showTweetForm, setShowTweetForm } = useTweetsViewStore();
 
   const {
     tweets,
@@ -31,9 +30,8 @@ export default function TweetList() {
 
   const { createTweet } = useCreateTweet();
   const { updateTweet } = useUpdateTweet();
+  const { deleteTweet } = useDeleteTweet();
   const { user: currentUser } = useCurrentUser();
-
-
 
   const [optimisticTweets, updateOptimisticTweets] = useOptimistic<Tweet[], OptimisticAction>([], (state, action) => {
     switch (action.type) {
@@ -43,6 +41,8 @@ export default function TweetList() {
         return [];
       case 'update':
         return state.map((tweet) => tweet.id === action.tweet.id ? { ...tweet, content: action.tweet.content } : tweet);
+      case 'delete':
+        return state.filter((tweet) => tweet.id !== action.tweetId);
       default:
         return state;
     }
@@ -51,9 +51,9 @@ export default function TweetList() {
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.target.value.split('_').forEach((value: string, index: number) => {
       if (index === 0) {
-        setFilters({ ...filters, sort: value as SortOption });
+        setFilters({ sort: value as SortOption });
       } else {
-        setFilters({ ...filters, direction: value as SortDirection });
+        setFilters({ direction: value as SortDirection });
       }
     });
   };
@@ -86,7 +86,6 @@ export default function TweetList() {
   const [, formAction] = useActionState<CreateTweetState, FormData>(createTweetAction, { ok: false });
 
   const updateTweetAction = async (prev: UpdateTweetState, formData: FormData): Promise<UpdateTweetState> => {
-    console.log('updateTweetAction', formData);
     const tweetId = Number(formData.get('tweet_id') ?? '');
     const content = String(formData.get('content') ?? '').trim();
     if (!content) return { ok: false, error: 'Content is required' };
@@ -108,9 +107,13 @@ export default function TweetList() {
     }
   }
   const [, updateTweetFormAction] = useActionState<UpdateTweetState, FormData>(updateTweetAction, { ok: false });
-
-  const handleTweetDeleted = () => {
-    mutate();
+  const handleTweetDeleted = (tweetId: number) => {
+    startTransition(async () => {
+      updateOptimisticTweets({ type: 'delete', tweetId: tweetId });
+      await deleteTweet(tweetId);
+      await mutate();
+      updateOptimisticTweets({ type: 'reset' });
+    });
   };
 
   useInfiniteScroll(async () => {
@@ -125,18 +128,23 @@ export default function TweetList() {
     <div className="container-fluid w-50">
       <h1 className='text-center'>Tweets</h1>
 
-      <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-        {showForm && (
+      <div style={{
+        marginBottom: '1rem',
+        display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', alignItems: 'center',
+        gap: '1rem'
+      }}>
+        {showTweetForm && (
           <TweetForm
             formAction={(_formData: FormData) => formAction(_formData)}
-            onCancel={() => setShowForm(false)}
+            onCancel={() => setShowTweetForm(false)}
           />
         )}
 
-        {!showForm && (
+        {!showTweetForm && (
           <button
             className="btn btn-primary"
-            onClick={() => setShowForm(true)}
+            onClick={() => setShowTweetForm(true)}
           >
             <i className="fa-solid fa-plus me-2"></i>
             New Tweet
@@ -176,7 +184,7 @@ export default function TweetList() {
               key={tweet.id}
               tweet={tweet}
               updateTweetFormAction={(formData: FormData) => updateTweetFormAction(formData)}
-              onTweetDeleted={handleTweetDeleted}
+              onTweetDeleted={() => handleTweetDeleted(tweet.id)}
             />
           ))
         )}

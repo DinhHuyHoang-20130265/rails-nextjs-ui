@@ -13,7 +13,6 @@ interface TweetCardProps {
 }
 
 export default function TweetCard({ tweet, updateTweetFormAction, onTweetDeleted }: TweetCardProps) {
-  const { deleteTweet } = useDeleteTweet();
   const [showEditForm, setShowEditForm] = useState(false);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -31,7 +30,6 @@ export default function TweetCard({ tweet, updateTweetFormAction, onTweetDeleted
   const handleDelete = async () => {
     if (window.confirm('Delete this tweet?')) {
       try {
-        await deleteTweet(tweet.id);
         onTweetDeleted();
       } catch (error) {
         console.error('Error deleting tweet:', error);

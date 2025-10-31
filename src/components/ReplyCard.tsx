@@ -2,18 +2,26 @@
 
 import { useState } from 'react';
 import { Reply } from '@/types';
-import { useCurrentUser, useDeleteReply, useUpdateReply } from '@/hooks/useApi';
+import { useCurrentUser } from '@/hooks/useApi';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
+import { useFormStatus } from 'react-dom';
 interface ReplyCardProps {
   reply: Reply;
+  onReplyDeleted: () => void;
+  updateReplyFormAction: (formData: FormData) => void;
+}
+const SubmitButton = () => {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary btn-sm me-2" disabled={pending}>
+      {pending ? 'Saving...' : 'Save'}
+    </button>
+  );
 }
 
-export default function ReplyCard({ reply }: ReplyCardProps) {
+export default function ReplyCard({ reply, onReplyDeleted, updateReplyFormAction }: ReplyCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(reply.content);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { deleteReply } = useDeleteReply(reply.parent_id);
-  const { updateReply } = useUpdateReply(reply.parent_id);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -32,38 +40,9 @@ export default function ReplyCard({ reply }: ReplyCardProps) {
     setEditContent(reply.content);
   };
 
-  const handleSaveEdit = async () => {
-    if (editContent.trim() === reply.content) {
-      setIsEditing(false);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await updateReply({ id: reply.id, content: editContent.trim() });
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating reply:', error);
-      alert('Failed to update reply. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditContent(reply.content);
-  };
-
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure?')) {
-      try {
-        await deleteReply(reply.id);
-      } catch (error) {
-        console.error('Error deleting reply:', error);
-        alert('Failed to delete reply. Please try again.');
-      }
-    }
   };
 
   const { user: currentUser } = useCurrentUser();
@@ -91,7 +70,7 @@ export default function ReplyCard({ reply }: ReplyCardProps) {
                       <MenuItem as="button" className="w-full align-items-center" onClick={handleEdit}>
                         <i className="fa-solid fa-pencil"></i> Edit
                       </MenuItem>
-                      <MenuItem as="button" className="w-full align-items-center" onClick={handleDelete}>
+                      <MenuItem as="button" className="w-full align-items-center" onClick={onReplyDeleted}>
                         <i className="fa-solid fa-trash"></i> Delete
                       </MenuItem>
                     </MenuItems>
@@ -103,28 +82,28 @@ export default function ReplyCard({ reply }: ReplyCardProps) {
             <div className="mt-1">
               {isEditing ? (
                 <div className="mt-2">
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="form-control"
-                    rows={3}
-                  />
-                  <div className="mt-2">
-                    <button
-                      className="btn btn-primary btn-sm me-2"
-                      onClick={handleSaveEdit}
-                      disabled={isSubmitting || !editContent.trim()}
-                    >
-                      {isSubmitting ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={handleCancelEdit}
-                      disabled={isSubmitting}
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  <form action={(formData: FormData) => {
+                    setIsEditing(false);
+                    updateReplyFormAction(formData);
+                  }}>
+                    <textarea
+                      name="content"
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="form-control"
+                      rows={3}
+                    />
+                    <input type="hidden" name="reply_id" value={reply.id} />
+                    <div className="mt-2">
+                      <SubmitButton />
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 </div>
               ) : (
                 <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>

@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/api';
+import { useCurrentUser } from '@/hooks/useApi';
+import { useAuthStore } from '@/stores/authStore';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -18,6 +20,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const { user } = useCurrentUser();
+  const setCurrentUser = useAuthStore(s => s.setCurrentUser);
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
 
   const isAuthRoute = useMemo(() => {
     if (!pathname) return false;
@@ -29,7 +34,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const tokenExists = hasAuthToken();
 
     // If on an auth route and already logged in, send to home
-    if (isAuthRoute && tokenExists) {
+    if (isAuthRoute && (tokenExists || isAuthenticated)) {
       router.replace('/');
       setChecked(true);
       return;
@@ -43,7 +48,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
 
     setChecked(true);
-  }, [isAuthRoute, router]);
+  }, [isAuthRoute, router, isAuthenticated]);
+
+  // Sync SWR user with auth store for global availability
+  useEffect(() => {
+    setCurrentUser(user || null);
+  }, [user, setCurrentUser]);
 
   // While deciding/redirecting, render a minimal placeholder to avoid flicker
   if (!checked) {

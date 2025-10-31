@@ -24,13 +24,6 @@ function SubmitButton() {
 }
 
 export default function ReplyForm({ tweetId, onCancel, formAction, formState }: ReplyFormProps) {
-  const [content, setContent] = useState(''); // Form state
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { value } = e.target;
-    setContent(value);
-    // Clear errors when user starts typing
-  };
-
   return (
     <div className="d-flex align-items-start gap-2 mt-1">
       <div className="reply card mb-2 flex-grow-1">
@@ -46,8 +39,6 @@ export default function ReplyForm({ tweetId, onCancel, formAction, formState }: 
 
             <div className="form-floating">
               <textarea
-                value={content}
-                onChange={handleInputChange}
                 rows={3}
                 placeholder="Reply…"
                 required

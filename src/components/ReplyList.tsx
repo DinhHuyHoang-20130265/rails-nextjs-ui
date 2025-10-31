@@ -1,4 +1,4 @@
-import { useCreateReply, useCurrentUser, useReplies } from "@/hooks/useApi";
+import { useCreateReply, useCurrentUser, useDeleteReply, useReplies, useUpdateReply } from "@/hooks/useApi";
 import ReplyForm from "./ReplyForm";
 import ReplyCard from "./ReplyCard";
 import { Reply } from "@/types";
@@ -7,19 +7,30 @@ import { startTransition, useActionState, useOptimistic, useState } from "react"
 interface ReplyListProps {
     tweetId: number;
 }
-type OptimisticAction = { type: 'add', reply: Reply } | { type: 'reset' };
+type OptimisticAction =
+    { type: 'add', reply: Reply } |
+    { type: 'reset' } |
+    { type: 'delete', replyId: number } |
+    { type: 'update', reply: Reply }
 interface CreateReplyState { ok: boolean; error?: string }
+interface UpdateReplyState { ok: boolean; error?: string }
 const ReplyList = ({ tweetId }: ReplyListProps) => {
     const [showReplyForm, setShowReplyForm] = useState(false);
     const { replies, pagination, isLoading, setSize, mutate } = useReplies(tweetId, { page: 1, per_page: 5 });
     const { user: currentUser } = useCurrentUser();
     const { createReply } = useCreateReply(tweetId);
+    const { updateReply } = useUpdateReply(tweetId);
+    const { deleteReply } = useDeleteReply(tweetId);
     const [optimisticReplies, updateOptimisticReplies] = useOptimistic<Reply[], OptimisticAction>([], (state, action) => {
         switch (action.type) {
             case 'add':
                 return [...state, action.reply];
             case 'reset':
                 return [];
+            case 'delete':
+                return state.filter((reply) => reply.id !== action.replyId);
+            case 'update':
+                return state.map((reply) => reply.id === action.reply.id ? { ...reply, content: action.reply.content } : reply);
             default:
                 return state;
         }
@@ -55,6 +66,39 @@ const ReplyList = ({ tweetId }: ReplyListProps) => {
         }
     }
     const [, formAction] = useActionState<CreateReplyState, FormData>(createReplyAction, { ok: false });
+    async function updateReplyAction(prev: UpdateReplyState, formData: FormData): Promise<UpdateReplyState> {
+        const replyId = Number(formData.get('reply_id') ?? '');
+        const content = String(formData.get('content') ?? '').trim();
+        if (!content) return { ok: false, error: 'Content is required' };
+        try {
+            startTransition(async () => {
+                updateOptimisticReplies({
+                    type: 'update', reply: {
+                        id: replyId,
+                        content,
+                    } as unknown as Reply
+                });
+                await updateReply({ id: replyId, content });
+                await mutate();
+                updateOptimisticReplies({ type: 'reset' });
+            });
+            return { ok: true };
+        } catch (error) {
+            console.error('Error updating reply:', error);
+            return { ok: false, error: 'Failed to update reply' };
+        }
+    }
+    const [, updateReplyFormAction] = useActionState<UpdateReplyState, FormData>(updateReplyAction, { ok: false });
+    const handleReplyDeleted = (replyId: number) => {
+        if (window.confirm('Delete this reply?')) {
+            startTransition(async () => {
+                updateOptimisticReplies({ type: 'delete', replyId: replyId });
+                await deleteReply(replyId);
+                await mutate();
+                updateOptimisticReplies({ type: 'reset' });
+            });
+        }
+    }
     const displayedReplies = [...(replies || []), ...optimisticReplies];
     return (
         <>
@@ -64,7 +108,10 @@ const ReplyList = ({ tweetId }: ReplyListProps) => {
             >
                 <div className="d-flex flex-column gap-0 pt-2">
                     {displayedReplies.map((reply) => (
-                        <ReplyCard key={reply.id} reply={reply} />
+                        <ReplyCard
+                            key={reply.id} reply={reply}
+                            onReplyDeleted={() => handleReplyDeleted(reply.id)}
+                            updateReplyFormAction={(formData: FormData) => updateReplyFormAction(formData)} />
                     ))}
                 </div>
                 {hasMoreReplies && (
